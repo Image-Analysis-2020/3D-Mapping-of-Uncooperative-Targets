@@ -14,8 +14,7 @@ using namespace samples;
 
 namespace fs = std::filesystem;
 
-vector<Mat> ImageFileGenerator(fs::path parentPath) {
-    Size size(1082, 1629);
+vector<Mat> ImageFileGenerator(fs::path parentPath, Size size) {
     vector<Mat> images;
     Mat resize_img;
 
@@ -40,21 +39,31 @@ vector<Mat> ImageFileGenerator(fs::path parentPath) {
     return images;
 }
 
-vector <vector<KeyPoint>> DetectKeypointsFAST(vector<Mat> imgs, int size, int threshold) {
+auto ComputeKeypointsORB(vector<Mat> imgs, int size, int threshold) {
+    struct retVects {
+        vector <vector<KeyPoint>> KeypointVector;
+        vector<Mat> DescriptorVector;
+    };
+
     vector <vector<KeyPoint>> KeypointVector;
+    vector<Mat> DescriptorVector;
+
     KeypointVector.resize(size);
+    DescriptorVector.resize(size);
 
-    Ptr<FastFeatureDetector> detector = FastFeatureDetector::create();
-
+    Ptr<Feature2D> orb = ORB::create();
+    
     for (int i = 0; i < size; i++) {
         cout << "Image size :" << imgs[i].rows << " " << imgs[i].cols << "\n";
-        detector->detect(
+        orb->detectAndCompute(
             imgs[i], 
+            Mat(),
             KeypointVector[i], 
-            Mat());
+            DescriptorVector[i]);
         KeyPointsFilter::retainBest(KeypointVector[i], threshold);
     }
-    return KeypointVector;
+
+    return retVects{ KeypointVector, DescriptorVector};
 }
 
 //void ShowKeyPoints(vector<Mat> imgs, vector <vector<KeyPoint>> KeypointVector) {
@@ -73,8 +82,8 @@ int main()
     Mat img1 = imread(image_path1, IMREAD_GRAYSCALE);
     string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session1/DSC_0008-2.jpg";
     Mat img2 = imread(image_path2, IMREAD_GRAYSCALE);*/
-
-    auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2");
+    Size size(1082, 1629);
+    auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2", size);
     
     //if (img1.empty())
     //{
@@ -104,13 +113,13 @@ int main()
     //    imwrite("starry_night.png", img);
     //}
 
-    vector <vector<KeyPoint>> keypointVector = DetectKeypointsFAST(imgs, 2, 2500);
+    auto [KeypointVector, DescriptorVector] = ComputeKeypointsORB(imgs, 2, 2500);
     
-    drawKeypoints(imgs[0], keypointVector[0], imgs[0],Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    drawKeypoints(imgs[0], KeypointVector[0], imgs[0],Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     namedWindow("keypoints1", WINDOW_NORMAL);
     imshow("keypoints1", imgs[0]);
 
-    drawKeypoints(imgs[1], keypointVector[1], imgs[1], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    drawKeypoints(imgs[1], KeypointVector[1], imgs[1], Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     namedWindow("keypoints2", WINDOW_NORMAL);
     imshow("keypoints2", imgs[1]);
 
@@ -118,17 +127,17 @@ int main()
 
     //Ptr<DescriptorExtractor> featureExtractor = DescriptorExtractor::create();
 
-    Ptr<DescriptorExtractor> Descriptor = ORB::create;
-    Mat descriptors1, descriptors2;
-    Descriptor->compute(imgs[0], keypointVector[0], descriptors1);
-    Descriptor->compute(imgs[1], keypointVector[1], descriptors2);
+    //Ptr<DescriptorExtractor> descriptor = ORB::create;
+    //Mat descriptors1, descriptors2;
+    //descriptor->compute(imgs[0], keypointVector[0], descriptors1);
+    //descriptor->compute(imgs[1], keypointVector[1], descriptors2);
 
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::BRUTEFORCE);
     std::vector< DMatch > matches;
-    matcher->match(descriptors1, descriptors2, matches);
+    matcher->match(DescriptorVector[0], DescriptorVector[1], matches);
 
     Mat img_matches;
-    drawMatches(imgs[0], keypointVector[0], imgs[1], keypointVector[1], matches, img_matches);
+    drawMatches(imgs[0], KeypointVector[0], imgs[1], KeypointVector[1], matches, img_matches);
 
     imshow("Matches", img_matches);
 
