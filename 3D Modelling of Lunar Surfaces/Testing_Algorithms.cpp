@@ -82,6 +82,7 @@ int main()
     Mat img1 = imread(image_path1, IMREAD_GRAYSCALE);
     string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session1/DSC_0008-2.jpg";
     Mat img2 = imread(image_path2, IMREAD_GRAYSCALE);*/
+
     Size size(1082, 1629);
     auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2", size);
     
@@ -133,7 +134,7 @@ int main()
     //descriptor->compute(imgs[1], keypointVector[1], descriptors2);
 
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::BRUTEFORCE);
-    std::vector< DMatch > matches;
+    vector< DMatch > matches;
     matcher->match(DescriptorVector[0], DescriptorVector[1], matches);
 
     Mat img_matches;
