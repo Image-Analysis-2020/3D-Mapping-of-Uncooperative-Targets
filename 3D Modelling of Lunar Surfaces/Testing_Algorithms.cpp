@@ -3,6 +3,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d.hpp>
+#include <opencv2/calib3d.hpp>
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -60,7 +61,7 @@ auto ComputeKeypointsORB(vector<Mat> imgs, int size, int threshold) {
             Mat(),
             KeypointVector[i], 
             DescriptorVector[i]);
-        KeyPointsFilter::retainBest(KeypointVector[i], threshold);
+        //KeyPointsFilter::retainBest(KeypointVector[i], threshold);
     }
 
     return retVects{ KeypointVector, DescriptorVector};
@@ -78,14 +79,22 @@ auto ComputeKeypointsORB(vector<Mat> imgs, int size, int threshold) {
 int main()
 {
 
-   /* string  image_path1 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session1/DSC_0007-2.jpg";
-    Mat img1 = imread(image_path1, IMREAD_GRAYSCALE);
-    string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session1/DSC_0008-2.jpg";
-    Mat img2 = imread(image_path2, IMREAD_GRAYSCALE);*/
+    string  image_path1 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/DSC_0003.jpg";
+    string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/DSC_0004.jpg";
 
     Size size(1082, 1629);
-    auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2", size);
-    
+    //auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2", size);
+
+    vector<Mat> imgs;
+    imgs.resize(2);
+    vector<Mat> imgsRe;
+    imgsRe.resize(2);
+
+    imgsRe[0] = imread(image_path1, IMREAD_GRAYSCALE);
+    imgsRe[1] = imread(image_path2, IMREAD_GRAYSCALE);
+    resize(imgsRe[0], imgs[0], size);
+    resize(imgsRe[1], imgs[1], size);
+
     //if (img1.empty())
     //{
     //    cout << "Could not read the image: " << image_path1 << endl;
@@ -103,18 +112,14 @@ int main()
 
     //namedWindow(windowName, WINDOW_AUTOSIZE); // Create a window
 
-    //namedWindow("luna1", WINDOW_NORMAL);
-    //imshow("luna1", imgs[1]); // Show our image inside the created window.
-    //namedWindow("luna2", WINDOW_NORMAL);
-    //imshow("luna2", imgs[2]); // Show our image inside the created window.
+    namedWindow("luna1", WINDOW_NORMAL);
+    imshow("luna1", imgs[0]); // Show our image inside the created window.
+    namedWindow("luna2", WINDOW_NORMAL);
+    imshow("luna2", imgs[1]); // Show our image inside the created window.
 
-    //int k = waitKey(0); // Wait for any keystroke in the window
-    //if (k == 's')
-    //{
-    //    imwrite("starry_night.png", img);
-    //}
+    int k = waitKey(0); // Wait for any keystroke in the window
 
-    auto [KeypointVector, DescriptorVector] = ComputeKeypointsORB(imgs, 2, 2500);
+    auto [KeypointVector, DescriptorVector] = ComputeKeypointsORB(imgs, 2, 3500);
     
     drawKeypoints(imgs[0], KeypointVector[0], imgs[0],Scalar::all(-1), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     namedWindow("keypoints1", WINDOW_NORMAL);
@@ -124,14 +129,8 @@ int main()
     namedWindow("keypoints2", WINDOW_NORMAL);
     imshow("keypoints2", imgs[1]);
 
-    int k = waitKey(0);
+    k = waitKey(0);
 
-    //Ptr<DescriptorExtractor> featureExtractor = DescriptorExtractor::create();
-
-    //Ptr<DescriptorExtractor> descriptor = ORB::create;
-    //Mat descriptors1, descriptors2;
-    //descriptor->compute(imgs[0], keypointVector[0], descriptors1);
-    //descriptor->compute(imgs[1], keypointVector[1], descriptors2);
 
     Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create(DescriptorMatcher::BRUTEFORCE);
     vector< DMatch > matches;
@@ -143,7 +142,96 @@ int main()
     imshow("Matches", img_matches);
 
     k = waitKey(0);
-    
-    destroyAllWindows; //destroy the created window
+
+    double max_dist = 0; 
+    double min_dist = 100;
+
+    //-- Quick calculation of max and min distances between keypoints
+    for (int i = 0; i < matches.size(); i++)
+    {
+        double dist = matches[i].distance;
+        if (dist < min_dist) min_dist = dist;
+        if (dist > max_dist) max_dist = dist;
+    }
+
+    std::vector< DMatch > good_matches;
+    vector<Point2f>imgpts1, imgpts2;
+    for (int i = 0; i < matches.size(); i++)
+    {
+        if (matches[i].distance <= max(10 * min_dist, 0.02)) {
+            good_matches.push_back(matches[i]);
+            imgpts1.push_back(KeypointVector[0][matches[i].queryIdx].pt);
+            imgpts2.push_back(KeypointVector[1][matches[i].trainIdx].pt);
+        }
+
+    }
+
+    Mat img_good_matches;
+    drawMatches(imgs[0], KeypointVector[0], imgs[1], KeypointVector[1], good_matches, img_good_matches);
+
+    imshow("Good Matches", img_matches);
+
+    k = waitKey(0);
+
+    cout << "finding fundamental Matrix " << "...";
+    Mat F = findFundamentalMat(imgpts1, imgpts2, RANSAC, 3., 0.99);   //FM_RANSAC
+    cout << " success! " << endl;
+
+    namedWindow("Fundamental Matrix", WINDOW_NORMAL);
+    imshow("Fundamental Matrix", F); 
+    k = waitKey(0);
+
+    cout << "Rectify uncalibrated points " << "...";
+    Mat H1, H2;
+    stereoRectifyUncalibrated(imgpts1, imgpts2, F, imgs[0].size(), H1, H2);
+    cout << " success! " << endl;
+
+    cout << "Warp image 1 " << "...";
+    Mat rectified1(imgs[0].size(), imgs[0].type());
+    warpPerspective(imgs[0], rectified1, H1, imgs[0].size());
+    cout << " success! " << endl;
+
+    namedWindow("Rectified Image1", WINDOW_NORMAL);
+    imshow("Rectified Image1", rectified1);
+    k = waitKey(0);
+
+    cout << "Warp image 2 " << "...";
+    Mat rectified2(imgs[1].size(), imgs[1].type());
+    warpPerspective(imgs[1], rectified2, H2, imgs[1].size());
+    cout << " success! " << endl;
+
+    namedWindow("Rectified Image2", WINDOW_NORMAL);
+    imshow("Rectified Image2", rectified2);
+    k = waitKey(0);
+
+    cout << "Crete StereoSGBM " << "...";
+    Ptr<StereoSGBM> sgbm = StereoSGBM::create(0,    //int minDisparity
+        96,     //int numDisparities
+        5,      //int SADWindowSize
+        600,    //int P1 = 0
+        2400,   //int P2 = 0
+        20,     //int disp12MaxDiff = 0
+        16,     //int preFilterCap = 0
+        1,      //int uniquenessRatio = 0
+        100,    //int speckleWindowSize = 0
+        20,     //int speckleRange = 0
+        true);  //bool fullDP = false
+    cout << " success! " << endl;
+
+    cout << "Compute StereoSGBM " << "...";
+    Mat disp;
+    sgbm->compute(rectified1, rectified2, disp);
+    cout << " success! " << endl;
+
+    String windowName = "Disparity Map"; //Name of the window
+
+    namedWindow(windowName, WINDOW_AUTOSIZE); // Create a window
+
+    namedWindow(windowName, WINDOW_NORMAL);
+    imshow(windowName, disp); // Show our image inside the created window.
+
+    k = waitKey(0);
+
+    destroyAllWindows(); //destroy the created window
     return 0;
 }
