@@ -9,6 +9,7 @@
 #include <filesystem>
 
 
+
 using namespace cv;
 using namespace std;
 using namespace samples;
@@ -79,8 +80,8 @@ auto ComputeKeypointsORB(vector<Mat> imgs, int size, int threshold) {
 int main()
 {
 
-    string  image_path1 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/DSC_0003.jpg";
-    string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/DSC_0004.jpg";
+    string  image_path1 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/test1.jpg";
+    string  image_path2 = "C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2/test2.jpg";
 
     Size size(1082, 1629);
     //auto imgs = ImageFileGenerator("C:/Users/gabri/OneDrive/University/Masters/Autumn_2020/Image Analysis with Microcomputer/Special Assigment/Test photos/Session2", size);
@@ -158,7 +159,7 @@ int main()
     vector<Point2f>imgpts1, imgpts2;
     for (int i = 0; i < matches.size(); i++)
     {
-        if (matches[i].distance <= max(10 * min_dist, 0.02)) {
+        if (matches[i].distance <= max(6 * min_dist, 0.02)) {
             good_matches.push_back(matches[i]);
             imgpts1.push_back(KeypointVector[0][matches[i].queryIdx].pt);
             imgpts2.push_back(KeypointVector[1][matches[i].trainIdx].pt);
@@ -166,12 +167,12 @@ int main()
 
     }
 
-    Mat img_good_matches;
-    drawMatches(imgs[0], KeypointVector[0], imgs[1], KeypointVector[1], good_matches, img_good_matches);
+    //Mat img_good_matches;
+    //drawMatches(imgs[0], KeypointVector[0], imgs[1], KeypointVector[1], good_matches, img_good_matches);
 
-    imshow("Good Matches", img_matches);
+    //imshow("Good Matches", img_matches);
 
-    k = waitKey(0);
+    //k = waitKey(0);
 
     cout << "finding fundamental Matrix " << "...";
     Mat F = findFundamentalMat(imgpts1, imgpts2, RANSAC, 3., 0.99);   //FM_RANSAC
