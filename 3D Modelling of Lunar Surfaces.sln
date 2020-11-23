@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "3D Modelling of Lunar Surfa
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenCVReprojectImageToPointCloud", "OpenCVReprojectImageToPointCloud\OpenCVReprojectImageToPointCloud.vcxproj", "{AC56787F-82DD-466E-8D57-046910C66302}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "2DToPointCloud", "2DToPointCloud\2DToPointCloud.vcxproj", "{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{AC56787F-82DD-466E-8D57-046910C66302}.Release|x64.Build.0 = Release|x64
 		{AC56787F-82DD-466E-8D57-046910C66302}.Release|x86.ActiveCfg = Release|Win32
 		{AC56787F-82DD-466E-8D57-046910C66302}.Release|x86.Build.0 = Release|Win32
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Debug|x64.ActiveCfg = Debug|x64
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Debug|x64.Build.0 = Debug|x64
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Debug|x86.ActiveCfg = Debug|Win32
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Debug|x86.Build.0 = Debug|Win32
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Release|x64.ActiveCfg = Release|x64
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Release|x64.Build.0 = Release|x64
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Release|x86.ActiveCfg = Release|Win32
+		{B8C4B7AD-E984-4ACF-8524-50FB68CABB80}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
