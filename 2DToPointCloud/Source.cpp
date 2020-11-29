@@ -27,7 +27,7 @@ int ndisparities = 96;
 int SADWindowSize = 7;
 Ptr<StereoBM> sbm = StereoBM::create(ndisparities, SADWindowSize);
 
-Mat m_map[2][2], Q;
+Mat m_map[2][2];
 
 shared_ptr<visualization::PCLVisualizer> viewer(
     new visualization::PCLVisualizer("3D Viewer"));
@@ -45,9 +45,9 @@ struct CalibrationResults
 {
     Mat cameraMatrix[2], distCoeffs[2];
     Mat R, R1, R2, P1, P2, T, E, F, Q;
-    double rms;
-    double err;
-    bool calibSucces;
+    double rms = 0;
+    double err = 0;
+    bool calibSucces = false;
 };
 
 StereoImgs LoadStereoImages(fs::path parentPath, Size size) {
@@ -243,13 +243,13 @@ CalibrationResults CalibrateCameras(fs::path parentPath, Size CheesBoardSize, fl
     return R;
 }
 
-void create_point_cloud(Mat StereoA_Img, Mat StereoB_Img) {
+void create_point_cloud(Mat StereoA_Img, Mat StereoB_Img, CalibrationResults CalibrateData)  {
     cout << "In create_point_cloud" << endl;
     Mat disp, disp8, aux[2], rgb, xyz;
     double minVal, maxVal;
 
-    cvtColor(StereoA_Img, aux[0], COLOR_BGR2GRAY);
-    cvtColor(StereoB_Img, aux[1], COLOR_BGR2GRAY);
+    cvtColor(StereoA_Img, aux[0], COLOR_BGR2GRAY,4);
+    cvtColor(StereoB_Img, aux[1], COLOR_BGR2GRAY,4);
 
     cout << "Computing disparity...";
     sbm->compute(aux[0], aux[1], disp);
@@ -266,7 +266,7 @@ void create_point_cloud(Mat StereoA_Img, Mat StereoB_Img) {
 
     key = waitKey();
 
-    reprojectImageTo3D(disp, xyz, Q, true);
+    reprojectImageTo3D(disp, xyz, CalibrateData.Q, true);
 
     PointCloud<PointXYZRGB>::Ptr point_cloud_ptr(
         new PointCloud<PointXYZRGB>);
@@ -297,16 +297,14 @@ void create_point_cloud(Mat StereoA_Img, Mat StereoB_Img) {
 
     cout << "Showing Point Cloud" << endl;
 
-    visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(point_cloud_ptr);
-    viewer->addPointCloud(point_cloud_ptr, "reconstruction");
+    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(point_cloud_ptr);
+    //viewer->addPointCloud(point_cloud_ptr, "reconstruction");
 
     key = waitKey();
 }
 
 int main(int argc, char* argv[])
 {
-    
-    int i, j, k, key;
     Size CboardSize = Size(9, 6);
     const float squareSize = 24.f;
 
@@ -351,7 +349,7 @@ int main(int argc, char* argv[])
         imgs.StereoB[i] = aux;
     }
 
-    create_point_cloud(imgs.StereoA[0], imgs.StereoB[0]);
+    create_point_cloud(imgs.StereoA[0], imgs.StereoB[0], CalibrateData);
 
     return 0;
 }
